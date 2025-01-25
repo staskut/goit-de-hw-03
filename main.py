@@ -4,7 +4,7 @@ os.environ["JAVA_HOME"] = "/opt/homebrew/Cellar/openjdk@17/17.0.13/libexec/openj
 
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, round
 
 spark = SparkSession.builder.appName("MyGoitSparkSandbox").getOrCreate()
 
@@ -40,10 +40,11 @@ total_expenses_per_user_per_category = joined_table.filter((joined_table.age >= 
     .sort("user_id", "category")
 
 expenses_structure = total_expenses_per_user_per_category.join(total_expenses_per_user, "user_id", "inner") \
-    .withColumn("percentage_of_expenses", col("total_expenses_per_category") / col("total_expenses") * 100)
+    .withColumn("percentage_of_expenses", round(col("total_expenses_per_category") / col("total_expenses") * 100, 2))
 
 expenses_structure.show()
 
 expenses_structure.groupby("category").avg("percentage_of_expenses") \
     .withColumnRenamed("avg(percentage_of_expenses)", "avg_percentage_of_expenses") \
+    .withColumn("avg_percentage_of_expenses", round(col("avg_percentage_of_expenses"), 2)) \
     .sort("avg_percentage_of_expenses", ascending=False).show(3)
